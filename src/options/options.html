@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Save WebP as JPG / PNG — Settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main class="page">
+    <header class="head">
+      <img class="head__icon" src="../../icons/icon.svg" alt="" width="40" height="40">
+      <div>
+        <h1 class="head__title">Save WebP as JPG / PNG</h1>
+        <p class="head__lede">
+          Right-click an image and pick <strong>Save WebP as JPG</strong> or
+          <strong>Save WebP as PNG</strong>. Conversion happens on your machine — the image is
+          never uploaded anywhere.
+        </p>
+      </div>
+    </header>
+
+    <section class="card">
+      <h2 class="card__title">Context menu</h2>
+
+      <label class="row">
+        <input type="checkbox" id="showJpg">
+        <span class="row__text">
+          <span class="row__label">Offer “Save as JPG”</span>
+        </span>
+      </label>
+
+      <label class="row">
+        <input type="checkbox" id="showPng">
+        <span class="row__text">
+          <span class="row__label">Offer “Save as PNG”</span>
+        </span>
+      </label>
+
+      <label class="row">
+        <input type="checkbox" id="showForAllImages">
+        <span class="row__text">
+          <span class="row__label">Show the menu for every image, not just WebP</span>
+          <span class="row__hint">Useful for converting AVIF or GIF too. JPG→JPG and PNG→PNG stay untouched.</span>
+        </span>
+      </label>
+
+      <label class="row">
+        <input type="checkbox" id="sniffBytes">
+        <span class="row__text">
+          <span class="row__label">Identify images by reading their first bytes</span>
+          <span class="row__hint">
+            Filenames lie: plenty of sites serve WebP from a <code>.jpg</code> address. This reads
+            64 bytes of the image, normally straight from the cache that already holds it.
+            Turn it off to rely on the address alone.
+          </span>
+        </span>
+      </label>
+
+      <label class="row">
+        <input type="checkbox" id="hideWhenUnknown">
+        <span class="row__text">
+          <span class="row__label">Hide the menu when the format can’t be identified</span>
+          <span class="row__hint">
+            Off by default: when detection fails it is better to offer the menu and report a
+            problem than to silently do nothing.
+          </span>
+        </span>
+      </label>
+    </section>
+
+    <section class="card">
+      <h2 class="card__title">JPG output</h2>
+
+      <div class="row row--stack">
+        <div class="row__text">
+          <label class="row__label" for="jpegQuality">Quality</label>
+          <span class="row__hint">Higher keeps more detail and makes bigger files. 92% is a good default.</span>
+        </div>
+        <div class="slider">
+          <input type="range" id="jpegQuality" min="5" max="100" step="1">
+          <output class="slider__value" id="jpegQualityValue" for="jpegQuality">92%</output>
+        </div>
+      </div>
+
+      <div class="row row--stack">
+        <div class="row__text">
+          <label class="row__label" for="jpegBackground">Colour behind transparency</label>
+          <span class="row__hint">
+            JPG has no transparency. Transparent pixels are painted with this colour first —
+            without it they would come out black.
+          </span>
+        </div>
+        <div class="colour">
+          <input type="color" id="jpegBackground" aria-label="Background colour">
+          <input type="text" id="jpegBackgroundHex" class="colour__hex" spellcheck="false"
+                 inputmode="text" maxlength="7" aria-label="Background colour as hex">
+          <span class="colour__swatches">
+            <button type="button" class="swatch" data-colour="#ffffff" style="--swatch:#ffffff" title="White"></button>
+            <button type="button" class="swatch" data-colour="#000000" style="--swatch:#000000" title="Black"></button>
+            <button type="button" class="swatch" data-colour="#f5f5f5" style="--swatch:#f5f5f5" title="Light grey"></button>
+            <button type="button" class="swatch" data-colour="#1c1b22" style="--swatch:#1c1b22" title="Dark"></button>
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="card__title">Saving</h2>
+
+      <label class="row">
+        <input type="checkbox" id="askWhereToSave">
+        <span class="row__text">
+          <span class="row__label">Ask where to save each file</span>
+          <span class="row__hint">Off: files go straight to your downloads folder.</span>
+        </span>
+      </label>
+
+      <label class="row">
+        <input type="checkbox" id="passthroughSameFormat">
+        <span class="row__text">
+          <span class="row__label">Never re-encode an image that is already the chosen format</span>
+          <span class="row__hint">
+            Saving a real JPG as JPG copies the original bytes instead of running it through the
+            encoder again, which would lose quality for nothing.
+          </span>
+        </span>
+      </label>
+    </section>
+
+    <section class="card">
+      <h2 class="card__title">Notifications</h2>
+
+      <label class="row">
+        <input type="checkbox" id="notifyOnError">
+        <span class="row__text">
+          <span class="row__label">Tell me when a conversion fails</span>
+        </span>
+      </label>
+
+      <label class="row">
+        <input type="checkbox" id="notifyOnSuccess">
+        <span class="row__text">
+          <span class="row__label">Tell me about every successful save</span>
+          <span class="row__hint">The download panel already shows these, so this is off by default.</span>
+        </span>
+      </label>
+
+      <label class="row">
+        <input type="checkbox" id="warnAnimated">
+        <span class="row__text">
+          <span class="row__label">Warn me when only the first frame could be saved</span>
+          <span class="row__hint">Animated WebP and GIF have many frames; JPG and PNG hold one.</span>
+        </span>
+      </label>
+    </section>
+
+    <footer class="foot">
+      <button type="button" id="reset" class="button">Restore defaults</button>
+      <span id="status" class="foot__status" role="status" aria-live="polite"></span>
+    </footer>
+  </main>
+
+  <script src="../lib/settings.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

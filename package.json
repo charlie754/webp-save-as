@@ -1,0 +1,23 @@
+{
+  "name": "firefox-webp-save-as",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Firefox extension: right-click a WebP image and save it as JPG or PNG.",
+  "scripts": {
+    "test": "node --test \"test/*.test.mjs\"",
+    "test:firefox": "node test/browser/run-firefox.mjs",
+    "test:extension": "node test/browser/run-extension.mjs",
+    "test:all": "npm test && npm run test:firefox && npm run test:extension",
+    "demo": "node test/browser/run-extension.mjs --keep-open",
+    "lint:ext": "web-ext lint --source-dir . --ignore-files \"test/**\" \"scripts/**\" \"docs/**\" \"dist/**\" package.json manifest.v3.json",
+    "package": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package.ps1"
+  },
+  "keywords": [
+    "firefox",
+    "webextension",
+    "webp",
+    "jpg",
+    "png"
+  ],
+  "license": "MIT"
+}

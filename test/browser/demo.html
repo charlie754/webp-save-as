@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Save WebP as JPG / PNG — manual check</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font: 15px/1.6 system-ui, sans-serif; margin: 0 auto; padding: 24px; max-width: 900px; }
+    h1 { font-size: 20px; }
+    .case { border: 1px solid #8884; border-radius: 8px; padding: 14px 16px; margin: 0 0 16px; }
+    .case h2 { font-size: 15px; margin: 0 0 4px; }
+    .expect { margin: 6px 0 10px; font-size: 14px; }
+    .expect b { font-family: ui-monospace, Consolas, monospace; }
+    img { max-width: 260px; height: auto; border: 1px solid #8884; border-radius: 4px; display: block; }
+    code { background: #8881; padding: 1px 5px; border-radius: 3px; font-size: 13px; }
+    .note { color: #7a7a85; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <h1>Right-click each image below</h1>
+  <p class="note">
+    Served over HTTP so the extension can read the bytes. Default settings assumed
+    (WebP only, byte sniffing on).
+  </p>
+
+  <div class="case">
+    <h2>1. A WebP at a <code>.webp</code> address</h2>
+    <p class="expect">Expect: <b>Save WebP as JPG</b> and <b>Save WebP as PNG</b>. Saving gives a 960×856 file.</p>
+    <img src="/test/fixtures/lossy-960x856.webp" alt="lossy WebP">
+  </div>
+
+  <div class="case">
+    <h2>2. The same WebP at a <code>.jpg</code> address, served as <code>image/jpeg</code></h2>
+    <p class="expect">
+      Expect: still <b>Save WebP as JPG / PNG</b> — both the name and the header are lying, and only
+      the bytes give it away. This is the case a filename-based extension gets wrong.
+    </p>
+    <img src="/test/fixtures/mislabelled-as.jpg" alt="WebP disguised as JPEG">
+  </div>
+
+  <div class="case">
+    <h2>3. A real PNG</h2>
+    <p class="expect">
+      Expect: <b>no menu items</b> by default. Turn on
+      <i>Show the menu for every image</i> in Preferences and they appear as
+      <b>Save Image as JPG / PNG</b>.
+    </p>
+    <img id="realPng" alt="generated PNG">
+  </div>
+
+  <div class="case">
+    <h2>4. A WebP with transparency</h2>
+    <p class="expect">
+      Expect the menu, and <b>Save WebP as JPG</b> should fill the transparent area with the colour
+      set in Preferences (white by default, not black). <b>Save WebP as PNG</b> keeps it transparent.
+    </p>
+    <img src="/test/fixtures/gecko-alpha-lossy.webp" alt="WebP with alpha" style="width:160px;image-rendering:pixelated;background:repeating-conic-gradient(#8883 0% 25%, transparent 0% 50%) 50%/16px 16px">
+  </div>
+
+  <div class="case">
+    <h2>5. A link to a WebP (no image involved)</h2>
+    <p class="expect">Expect the menu on the link itself.</p>
+    <p><a href="/test/fixtures/lossy-960x856.webp">lossy-960x856.webp</a></p>
+  </div>
+
+  <div class="case">
+    <h2>6. A WebP behind a <code>blob:</code> URL</h2>
+    <p class="expect">
+      Expect the menu, and a successful save — the background page cannot read this URL, so the
+      extension asks the page for the bytes instead.
+    </p>
+    <div id="blobHost"></div>
+    <p class="note" id="blobUrl"></p>
+  </div>
+
+  <script>
+  // Case 3: a genuine PNG, generated here so the page needs no extra binary fixture.
+  (function () {
+    const canvas = document.createElement('canvas');
+    canvas.width = 200;
+    canvas.height = 120;
+    const ctx = canvas.getContext('2d');
+    const gradient = ctx.createLinearGradient(0, 0, 200, 120);
+    gradient.addColorStop(0, '#0060df');
+    gradient.addColorStop(1, '#9059ff');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 200, 120);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 22px system-ui, sans-serif';
+    ctx.fillText('real PNG', 42, 68);
+    document.getElementById('realPng').src = canvas.toDataURL('image/png');
+  })();
+
+  // Case 6: put the WebP behind a blob: URL owned by this page.
+  fetch('/test/fixtures/lossy-960x856.webp')
+    .then(function (r) { return r.blob(); })
+    .then(function (blob) {
+      const url = URL.createObjectURL(blob);
+      const img = new Image();
+      img.src = url;
+      img.alt = 'WebP from a blob URL';
+      img.style.maxWidth = '260px';
+      document.getElementById('blobHost').appendChild(img);
+      document.getElementById('blobUrl').textContent = url;
+    })
+    .catch(function (err) {
+      document.getElementById('blobUrl').textContent = 'could not build a blob URL: ' + err.message;
+    });
+  </script>
+</body>
+</html>

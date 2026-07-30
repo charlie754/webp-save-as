@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Save WebP as JPG or PNG">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3b82f6"/>
+      <stop offset="1" stop-color="#1d4ed8"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="13" fill="url(#bg)"/>
+  <!-- photo frame -->
+  <rect x="12" y="13" width="40" height="27" rx="3.5" fill="#ffffff" opacity="0.95"/>
+  <circle cx="22" cy="21.5" r="3.6" fill="#fbbf24"/>
+  <path d="M15.5 37 L26 26.5 L33 33.5 L39.5 27 L48.5 37 Z" fill="#1d4ed8" opacity="0.85"/>
+  <!-- download arrow -->
+  <path d="M32 40 v10" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+  <path d="M23.5 46 L32 55 L40.5 46" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

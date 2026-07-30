@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>loading…</title>
+</head>
+<body>
+  <p>Serves an image from a <code>blob:</code> URL, which only this page's origin can read.</p>
+  <div id="host"></div>
+  <script>
+  // The extension cannot fetch this URL from its background page; it has to ask the page.
+  // The blob URL is published through document.title so the test can read it via tabs.get().
+  fetch('/test/fixtures/lossy-960x856.webp')
+    .then(function (r) { return r.blob(); })
+    .then(function (blob) {
+      const url = URL.createObjectURL(blob);
+      const img = new Image();
+      img.src = url;
+      img.width = 240;
+      document.getElementById('host').appendChild(img);
+      document.title = url;
+    })
+    .catch(function (err) { document.title = 'error: ' + err.message; });
+  </script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+{
+  "manifest_version": 2,
+  "name": "Save WebP as JPG / PNG",
+  "version": "1.0.0",
+  "description": "Right-click a WebP image and save it as JPG or PNG. Conversion happens locally in your browser; nothing is uploaded.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "webp-save-as@local",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    },
+    "gecko_android": {
+      "strict_min_version": "142.0"
+    }
+  },
+  "icons": {
+    "48": "icons/icon.svg",
+    "96": "icons/icon.svg"
+  },
+  "permissions": [
+    "menus",
+    "downloads",
+    "storage",
+    "notifications",
+    "<all_urls>"
+  ],
+  "background": {
+    "persistent": true,
+    "scripts": [
+      "src/lib/sniff.js",
+      "src/lib/filename.js",
+      "src/lib/convert.js",
+      "src/lib/settings.js",
+      "src/lib/pagefetch.js",
+      "src/background.js"
+    ]
+  },
+  "options_ui": {
+    "page": "src/options/options.html",
+    "open_in_tab": false,
+    "browser_style": false
+  }
+}

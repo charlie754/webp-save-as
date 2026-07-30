@@ -1,0 +1,232 @@
+:root {
+  color-scheme: light dark;
+
+  --bg: #f9f9fb;
+  --card: #ffffff;
+  --border: #d7d7db;
+  --text: #15141a;
+  --muted: #5b5b66;
+  --accent: #0060df;
+  --accent-text: #ffffff;
+  --code-bg: #ededf0;
+  --ok: #017a4a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1b22;
+    --card: #2b2a33;
+    --border: #52525e;
+    --text: #fbfbfe;
+    --muted: #b1b1bb;
+    --accent: #00ddff;
+    --accent-text: #15141a;
+    --code-bg: #42414d;
+    --ok: #54ffbd;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 20px 18px 28px;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  min-width: 460px;
+}
+
+.page {
+  max-width: 660px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ------------------------------------------------------------------- header */
+
+.head {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.head__icon { flex: none; }
+
+.head__title {
+  margin: 2px 0 4px;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.head__lede {
+  margin: 0;
+  color: var(--muted);
+  max-width: 54ch;
+}
+
+/* -------------------------------------------------------------------- cards */
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px 6px;
+}
+
+.card__title {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* --------------------------------------------------------------------- rows */
+
+.row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 8px 0 10px;
+  border-top: 1px solid transparent;
+}
+
+.row + .row { border-top-color: color-mix(in srgb, var(--border) 55%, transparent); }
+
+.row--stack { flex-direction: column; gap: 8px; }
+
+.row__text { display: flex; flex-direction: column; gap: 3px; }
+
+.row__label { font-weight: 500; }
+
+.row__hint {
+  color: var(--muted);
+  font-size: 13px;
+  max-width: 58ch;
+}
+
+label.row { cursor: pointer; }
+
+input[type="checkbox"] {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 2px 0 0;
+  accent-color: var(--accent);
+}
+
+code {
+  background: var(--code-bg);
+  border-radius: 3px;
+  padding: 0 4px;
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 12px;
+}
+
+/* ------------------------------------------------------------------- slider */
+
+.slider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.slider input[type="range"] {
+  flex: 1 1 auto;
+  min-width: 0;
+  accent-color: var(--accent);
+}
+
+.slider__value {
+  flex: none;
+  min-width: 4ch;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------------------- colour */
+
+.colour {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+input[type="color"] {
+  width: 44px;
+  height: 30px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--card);
+  cursor: pointer;
+}
+
+.colour__hex {
+  width: 10ch;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+
+.colour__hex[aria-invalid="true"] { border-color: #d7263d; }
+
+.colour__swatches { display: flex; gap: 6px; }
+
+.swatch {
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--swatch);
+  cursor: pointer;
+  padding: 0;
+}
+
+.swatch:hover { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* ------------------------------------------------------------------- footer */
+
+.foot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.button {
+  font: inherit;
+  padding: 7px 14px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.button:hover { background: color-mix(in srgb, var(--accent) 12%, var(--card)); }
+
+.button:focus-visible,
+input:focus-visible,
+.swatch:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.foot__status {
+  color: var(--ok);
+  font-size: 13px;
+  opacity: 0;
+  transition: opacity 140ms ease-out;
+}
+
+.foot__status[data-visible="true"] { opacity: 1; }

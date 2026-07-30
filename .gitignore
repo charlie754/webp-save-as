@@ -1,0 +1,7 @@
+node_modules/
+dist/
+web-ext-artifacts/
+*.log
+
+# Local machine state, not project configuration
+.claude/settings.local.json

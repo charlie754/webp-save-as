@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>convert.js — Gecko harness</title>
+  <style>
+    body { font: 14px/1.5 system-ui, sans-serif; padding: 20px; }
+    li.ok::marker { color: green; }
+    li.bad { color: #b00020; font-weight: 600; }
+    pre { background: #f4f4f6; padding: 8px; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <h1>convert.js in this browser engine</h1>
+  <p id="engine"></p>
+  <ul id="out"></ul>
+  <pre id="raw"></pre>
+
+  <!-- The module under test, loaded exactly as the extension loads it. -->
+  <script src="/src/lib/convert.js"></script>
+  <script src="/src/lib/sniff.js"></script>
+  <script>
+  'use strict';
+  /**
+   * Exercises the real decode/encode path: Gecko's WebP decoder via createImageBitmap and its
+   * JPEG/PNG encoders via OffscreenCanvas. Results are POSTed back to the runner, which decides
+   * the exit code. Nothing here touches extension APIs.
+   */
+  (function () {
+    const results = [];
+    const list = document.getElementById('out');
+
+    function record(name, ok, detail) {
+      results.push({ name: name, ok: !!ok, detail: detail === undefined ? '' : String(detail) });
+      const li = document.createElement('li');
+      li.className = ok ? 'ok' : 'bad';
+      li.textContent = (ok ? 'PASS  ' : 'FAIL  ') + name + (detail ? ' — ' + detail : '');
+      list.appendChild(li);
+    }
+
+    async function check(name, fn) {
+      try {
+        const detail = await fn();
+        record(name, true, detail);
+      } catch (err) {
+        record(name, false, (err && err.message) || String(err));
+      }
+    }
+
+    function assert(condition, message) {
+      if (!condition) throw new Error(message);
+    }
+
+    function assertEqual(actual, expected, label) {
+      if (actual !== expected) throw new Error(label + ': expected ' + expected + ', got ' + actual);
+    }
+
+    async function head(blob, n) {
+      const buf = await blob.slice(0, n).arrayBuffer();
+      return new Uint8Array(buf);
+    }
+
+    function hex(bytes) {
+      return Array.prototype.map.call(bytes, function (b) {
+        return (b < 16 ? '0' : '') + b.toString(16);
+      }).join(' ');
+    }
+
+    async function toBase64(blob) {
+      const buf = new Uint8Array(await blob.arrayBuffer());
+      let binary = '';
+      for (let i = 0; i < buf.length; i++) binary += String.fromCharCode(buf[i]);
+      return btoa(binary);
+    }
+
+    /** Decode a blob and read one pixel, so we can prove what the encoder actually wrote. */
+    async function pixelAt(blob, x, y) {
+      const bitmap = await createImageBitmap(blob);
+      const canvas = document.createElement('canvas');
+      canvas.width = bitmap.width;
+      canvas.height = bitmap.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(bitmap, 0, 0);
+      const data = ctx.getImageData(x, y, 1, 1).data;
+      bitmap.close && bitmap.close();
+      return { r: data[0], g: data[1], b: data[2], a: data[3], width: canvas.width, height: canvas.height };
+    }
+
+    /** A source image with real transparency, built here so the test needs no binary fixture. */
+    async function transparentSource() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 16;
+      canvas.height = 16;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, 16, 16);                 // left half stays fully transparent
+      ctx.fillStyle = 'rgb(0, 0, 255)';
+      ctx.fillRect(8, 0, 8, 16);                   // right half opaque blue
+      return await new Promise(function (resolve, reject) {
+        canvas.toBlob(function (b) { b ? resolve(b) : reject(new Error('toBlob failed')); }, 'image/png');
+      });
+    }
+
+    async function makeWebp(quality) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 40;
+      canvas.height = 24;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, 40, 24);
+      ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+      ctx.fillRect(0, 0, 20, 24);
+      ctx.fillStyle = '#3366cc';
+      ctx.fillRect(20, 0, 20, 24);
+      return await new Promise(function (resolve, reject) {
+        canvas.toBlob(function (b) { b ? resolve(b) : reject(new Error('no webp encoder')); }, 'image/webp', quality);
+      });
+    }
+
+    async function run() {
+      document.getElementById('engine').textContent = navigator.userAgent;
+
+      const capabilities = {
+        createImageBitmap: typeof createImageBitmap === 'function',
+        OffscreenCanvas: typeof OffscreenCanvas === 'function',
+        convertToBlob: typeof OffscreenCanvas === 'function' &&
+          typeof new OffscreenCanvas(1, 1).convertToBlob === 'function',
+      };
+
+      let webp = null;
+      await check('fetches the real WebP fixture', async function () {
+        const response = await fetch('/test/fixtures/lossy-960x856.webp');
+        assert(response.ok, 'HTTP ' + response.status);
+        webp = await response.blob();
+        assert(webp.size === 2358, 'unexpected fixture size ' + webp.size);
+        const format = ImageSniff.detectFormat(await head(webp, 64));
+        assertEqual(format.mime, 'image/webp', 'sniffed mime');
+        assertEqual(format.width, 960, 'sniffed width');
+        return webp.size + ' bytes, ' + ImageSniff.describe(format);
+      });
+
+      await check('this engine decodes WebP with createImageBitmap', async function () {
+        assert(capabilities.createImageBitmap, 'createImageBitmap is missing');
+        const bitmap = await createImageBitmap(webp);
+        assertEqual(bitmap.width, 960, 'decoded width');
+        assertEqual(bitmap.height, 856, 'decoded height');
+        bitmap.close && bitmap.close();
+        return '960×856';
+      });
+
+      let png = null;
+      await check('WebP → PNG produces a real PNG at the source size', async function () {
+        const out = await ImageConvert.convertImage(webp, { format: 'png' });
+        png = out.blob;
+        assertEqual(out.mime, 'image/png', 'reported mime');
+        assertEqual(png.type, 'image/png', 'blob type');
+        assertEqual(out.width, 960, 'width');
+        assertEqual(out.height, 856, 'height');
+        const signature = await head(png, 8);
+        assertEqual(hex(signature), '89 50 4e 47 0d 0a 1a 0a', 'PNG signature');
+        const reread = ImageSniff.detectFormat(await head(png, 64));
+        assertEqual(reread.mime, 'image/png', 'round-trip sniff');
+        assertEqual(reread.width, 960, 'round-trip width');
+        return png.size + ' bytes via ' + out.encoder + ' canvas';
+      });
+
+      let jpg = null;
+      await check('WebP → JPG produces a real JPEG at the source size', async function () {
+        const out = await ImageConvert.convertImage(webp, { format: 'jpeg', quality: 0.92 });
+        jpg = out.blob;
+        assertEqual(out.mime, 'image/jpeg', 'reported mime');
+        assertEqual(jpg.type, 'image/jpeg', 'blob type');
+        assertEqual(out.quality, 0.92, 'quality passed through');
+        const signature = await head(jpg, 3);
+        assertEqual(hex(signature), 'ff d8 ff', 'JPEG signature');
+        const decoded = await pixelAt(jpg, 0, 0);
+        assertEqual(decoded.width, 960, 'decoded width');
+        assertEqual(decoded.height, 856, 'decoded height');
+        return jpg.size + ' bytes';
+      });
+
+      await check('the quality setting reaches the encoder', async function () {
+        const low = await ImageConvert.convertImage(webp, { format: 'jpeg', quality: 0.1 });
+        const high = await ImageConvert.convertImage(webp, { format: 'jpeg', quality: 0.95 });
+        assert(low.blob.size < high.blob.size,
+          'q0.1 (' + low.blob.size + ') should be smaller than q0.95 (' + high.blob.size + ')');
+        return low.blob.size + ' B at 10% vs ' + high.blob.size + ' B at 95%';
+      });
+
+      await check('a percentage quality is accepted as well as a fraction', async function () {
+        const a = await ImageConvert.convertImage(webp, { format: 'jpeg', quality: 40 });
+        const b = await ImageConvert.convertImage(webp, { format: 'jpeg', quality: 0.4 });
+        assertEqual(a.quality, 0.4, 'normalised quality');
+        assertEqual(a.blob.size, b.blob.size, 'identical output size');
+        return 'both ' + a.blob.size + ' bytes';
+      });
+
+      await check('transparency is flattened onto the chosen colour for JPG', async function () {
+        const source = await transparentSource();
+        const out = await ImageConvert.convertImage(source, { format: 'jpeg', background: '#ff0000' });
+        const clear = await pixelAt(out.blob, 2, 2);   // was fully transparent
+        const opaque = await pixelAt(out.blob, 12, 2); // was opaque blue
+        assert(clear.r > 200 && clear.g < 60 && clear.b < 60,
+          'transparent area should be red, got rgb(' + clear.r + ',' + clear.g + ',' + clear.b + ')');
+        assert(opaque.b > 200 && opaque.r < 60,
+          'opaque area should stay blue, got rgb(' + opaque.r + ',' + opaque.g + ',' + opaque.b + ')');
+        assertEqual(clear.a, 255, 'JPEG output must be fully opaque');
+        return 'transparent → rgb(' + clear.r + ',' + clear.g + ',' + clear.b + ')';
+      });
+
+      await check('an invalid background colour falls back to white, not black', async function () {
+        const source = await transparentSource();
+        // 'white' is a valid CSS colour but not a valid hex value; normalizeBackground rejects it
+        // so the caller cannot end up with the canvas default (black) by accident.
+        const out = await ImageConvert.convertImage(source, { format: 'jpeg', background: 'white' });
+        const clear = await pixelAt(out.blob, 2, 2);
+        assert(clear.r > 240 && clear.g > 240 && clear.b > 240,
+          'expected white, got rgb(' + clear.r + ',' + clear.g + ',' + clear.b + ')');
+        return 'rgb(' + clear.r + ',' + clear.g + ',' + clear.b + ')';
+      });
+
+      await check('PNG output keeps transparency', async function () {
+        const source = await transparentSource();
+        const out = await ImageConvert.convertImage(source, { format: 'png' });
+        const clear = await pixelAt(out.blob, 2, 2);
+        assertEqual(clear.a, 0, 'alpha of the transparent area');
+        const opaque = await pixelAt(out.blob, 12, 2);
+        assertEqual(opaque.a, 255, 'alpha of the opaque area');
+        return 'alpha preserved';
+      });
+
+      await check('an empty or non-image blob is rejected, not silently saved', async function () {
+        await ImageConvert.convertImage(new Blob([], { type: 'image/webp' }), { format: 'png' })
+          .then(function () { throw new Error('empty blob was accepted'); },
+                function () { /* expected */ });
+        await ImageConvert.convertImage(new Blob(['not an image at all'], { type: 'image/webp' }), { format: 'png' })
+          .then(function () { throw new Error('garbage was accepted'); },
+                function () { /* expected */ });
+        return 'both rejected';
+      });
+
+      await check('an unsupported target format is refused', async function () {
+        await ImageConvert.convertImage(webp, { format: 'webp' })
+          .then(function () { throw new Error('webp target was accepted'); },
+                function (err) { assert(/Unsupported target format/.test(err.message), err.message); });
+        return 'refused';
+      });
+
+      // Generated WebP variants from this engine's own encoder, saved as extra fixtures.
+      const fixtures = {};
+      await check('captures WebP variants from this engine for the unit fixtures', async function () {
+        const parts = [];
+        for (const [name, quality] of [['alpha-lossy', 0.8], ['alpha-max', 1]]) {
+          try {
+            const blob = await makeWebp(quality);
+            const format = ImageSniff.detectFormat(await head(blob, 64));
+            fixtures[name] = { base64: await toBase64(blob), size: blob.size, format: format };
+            parts.push(name + ': ' + ImageSniff.describe(format) +
+              (format.hasAlpha ? ' +alpha' : '') + ' (' + blob.size + ' B)');
+          } catch (err) {
+            parts.push(name + ': unavailable (' + err.message + ')');
+          }
+        }
+        return parts.join('; ');
+      });
+
+      const payload = {
+        userAgent: navigator.userAgent,
+        capabilities: capabilities,
+        results: results,
+        fixtures: fixtures,
+        passed: results.filter(function (r) { return r.ok; }).length,
+        failed: results.filter(function (r) { return !r.ok; }).length,
+      };
+      document.getElementById('raw').textContent =
+        payload.passed + ' passed, ' + payload.failed + ' failed';
+
+      try {
+        await fetch('/results', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      } catch (err) {
+        document.getElementById('raw').textContent += '\ncould not report: ' + err.message;
+      }
+    }
+
+    run().catch(function (err) {
+      record('harness itself', false, (err && err.stack) || String(err));
+      fetch('/results', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ results: results, passed: 0, failed: results.length, fatal: String(err) }),
+      }).catch(function () {});
+    });
+  })();
+  </script>
+</body>
+</html>

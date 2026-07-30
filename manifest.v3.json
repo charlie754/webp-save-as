@@ -1,0 +1,48 @@
+{
+  "//": "Manifest V3 variant. See README.md -> 'Manifest V3'. Swap this over manifest.json to use it.",
+  "//host_permissions": "In Firefox MV3 host permissions are NOT granted at install time. The extension cannot read image bytes until the user grants access (about:addons -> this add-on -> Permissions -> 'Access your data for all websites'), or you accept it per-site via the toolbar. That friction is why MV2 is the default here.",
+  "manifest_version": 3,
+  "name": "Save WebP as JPG / PNG",
+  "version": "1.0.0",
+  "description": "Right-click a WebP image and save it as JPG or PNG. Conversion happens locally in your browser; nothing is uploaded.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "webp-save-as@local",
+      "strict_min_version": "142.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    },
+    "gecko_android": {
+      "strict_min_version": "142.0"
+    }
+  },
+  "icons": {
+    "48": "icons/icon.svg",
+    "96": "icons/icon.svg"
+  },
+  "permissions": [
+    "menus",
+    "downloads",
+    "storage",
+    "notifications",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": [
+      "src/lib/sniff.js",
+      "src/lib/filename.js",
+      "src/lib/convert.js",
+      "src/lib/settings.js",
+      "src/lib/pagefetch.js",
+      "src/background.js"
+    ]
+  },
+  "options_ui": {
+    "page": "src/options/options.html",
+    "open_in_tab": false
+  }
+}
