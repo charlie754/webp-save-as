@@ -159,12 +159,34 @@
       </label>
     </section>
 
+    <section class="card">
+      <h2 class="card__title">Support</h2>
+      <div class="support">
+        <p class="support__text">
+          This is free and open source, and stays that way. If it saved you some time, you can
+          buy me a coffee — it is a one-off, and nothing in the extension changes either way.
+        </p>
+        <button type="button" id="kofi" class="kofi" data-url="https://ko-fi.com/irp_hongkong">
+          <svg class="kofi__icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+            <path fill="currentColor" d="M4 4h13a4 4 0 0 1 0 8h-1.1A6 6 0 0 1 10 17H8a6 6 0 0 1-6-6V4a0 0 0 0 1 0 0zm12 2v4h1a2 2 0 0 0 0-4h-1z"/>
+            <path fill="currentColor" d="M3 19h14a1 1 0 0 1 0 2H3a1 1 0 0 1 0-2z"/>
+          </svg>
+          Support me on Ko-fi
+        </button>
+        <p class="support__link">ko-fi.com/irp_hongkong</p>
+      </div>
+    </section>
+
     <footer class="foot">
       <button type="button" id="reset" class="button">Restore defaults</button>
       <span id="status" class="foot__status" role="status" aria-live="polite"></span>
     </footer>
   </main>
 
+  <!-- polyfill.js first, so the page establishes the `browser` namespace itself rather than
+       relying on the host providing one. A no-op where it already exists, which includes
+       Firefox and current Chrome. -->
+  <script src="../lib/polyfill.js"></script>
   <script src="../lib/settings.js"></script>
   <script src="options.js"></script>
 </body>

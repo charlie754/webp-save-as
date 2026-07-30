@@ -221,6 +221,15 @@ introduced there. Drop that key and you can lower the floor to 115.
 
 ---
 
+## Support
+
+Free and open source, and staying that way. If it saved you time, there is a
+**Support me on Ko-fi** button at the bottom of the extension's Preferences —
+or go straight to [ko-fi.com/irp_hongkong](https://ko-fi.com/irp_hongkong).
+
+Nothing in the extension changes either way: no nagging, no reminders, no
+feature held back.
+
 ## Licence
 
-MIT
+MIT — see [LICENSE](LICENSE). Copyright © 2026 IRP_HongKong.

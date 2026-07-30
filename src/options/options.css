@@ -195,6 +195,50 @@ input[type="color"] {
 
 .swatch:hover { outline: 2px solid var(--accent); outline-offset: 1px; }
 
+/* ------------------------------------------------------------------ support */
+
+.support {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 2px 0 12px;
+}
+
+.support__text {
+  margin: 0;
+  color: var(--muted);
+  max-width: 58ch;
+}
+
+.kofi {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: inherit;
+  font-weight: 600;
+  padding: 9px 16px;
+  border: none;
+  border-radius: 6px;
+  /* Ko-fi's own coral; kept legible against white in both themes. */
+  background: #ff5e5b;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.kofi:hover { background: #f04340; }
+
+.kofi:active { transform: translateY(1px); }
+
+.kofi__icon { flex: none; }
+
+.support__link {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+
 /* ------------------------------------------------------------------- footer */
 
 .foot {

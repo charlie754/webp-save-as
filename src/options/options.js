@@ -110,6 +110,20 @@
       render(await Settings.reset());
       flash('Defaults restored');
     });
+
+    const kofi = el('kofi');
+    if (kofi) {
+      kofi.addEventListener('click', function () {
+        const url = kofi.dataset.url;
+        // This page runs inside an iframe in about:addons / chrome://extensions, where
+        // window.open is unreliable. tabs.create needs no permission and always works.
+        if (typeof browser !== 'undefined' && browser.tabs && browser.tabs.create) {
+          browser.tabs.create({ url: url });
+        } else {
+          window.open(url, '_blank', 'noopener,noreferrer');
+        }
+      });
+    }
   }
 
   Settings.get().then(function (settings) {

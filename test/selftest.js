@@ -279,6 +279,10 @@
       }
       assertEqual(stored.notifyOnSuccess, true, 'the tick reached storage.local');
 
+      const kofi = doc.getElementById('kofi');
+      assert(kofi, 'the Ko-fi support button is missing');
+      assertEqual(kofi.dataset.url, 'https://ko-fi.com/irp_hongkong', 'the Ko-fi URL');
+
       frame.remove();
       await ExtSettings.reset();
       ExtSettings.invalidate();

@@ -17,7 +17,7 @@
  */
 
 importScripts(
-  '/src/chrome/polyfill.js',
+  '/src/lib/polyfill.js',
   '/src/lib/sniff.js',
   '/src/lib/identify.js',
   '/src/lib/filename.js',

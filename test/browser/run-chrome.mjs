@@ -208,19 +208,51 @@ async function main() {
   const sendWorker = makeSender(workerWs);
   await sendWorker('Runtime.enable');
 
-  /** Evaluate an async body inside the real service worker and return its value. */
-  async function evaluate(body) {
-    const reply = await sendWorker('Runtime.evaluate', {
-      expression: `(async () => { ${body} })()`,
-      awaitPromise: true,
-      returnByValue: true,
-    });
-    if (reply.error) throw new Error('CDP: ' + reply.error.message);
-    const details = reply.result.exceptionDetails;
-    if (details) {
-      throw new Error((details.exception && (details.exception.description || details.exception.value)) || details.text);
+  /** Evaluate an async body against a CDP target and return its value. */
+  function makeEvaluator(send) {
+    return async function evaluate(body) {
+      const reply = await send('Runtime.evaluate', {
+        expression: `(async () => { ${body} })()`,
+        awaitPromise: true,
+        returnByValue: true,
+      });
+      if (reply.error) throw new Error('CDP: ' + reply.error.message);
+      const details = reply.result.exceptionDetails;
+      if (details) {
+        throw new Error((details.exception && (details.exception.description || details.exception.value)) || details.text);
+      }
+      return reply.result.result.value;
+    };
+  }
+
+  /** Evaluate inside the real service worker. */
+  const evaluate = makeEvaluator(sendWorker);
+
+  /** Open an extension page and return an evaluator for it, plus a closer. */
+  async function openPage(url) {
+    const created = await sendBrowser('Target.createTarget', { url });
+    if (!created.result || !created.result.targetId) {
+      throw new Error('could not open ' + url + ': ' + JSON.stringify(created.error || created));
     }
-    return reply.result.result.value;
+    const targetId = created.result.targetId;
+    let entry = null;
+    for (let i = 0; i < 60; i++) {
+      const targets = await (await fetch(`http://127.0.0.1:${DEBUG_PORT}/json/list`)).json();
+      entry = targets.find((t) => t.id === targetId && t.webSocketDebuggerUrl);
+      if (entry) break;
+      await new Promise((r) => setTimeout(r, 250));
+    }
+    if (!entry) throw new Error('the page target never became debuggable');
+    const ws = await connect(entry.webSocketDebuggerUrl);
+    const send = makeSender(ws);
+    await send('Runtime.enable');
+    return {
+      evaluate: makeEvaluator(send),
+      close: async () => {
+        try { ws.close(); } catch { /* closing anyway */ }
+        await sendBrowser('Target.closeTarget', { targetId });
+      },
+    };
   }
 
   async function check(name, fn) {
@@ -456,6 +488,57 @@ async function main() {
     assert(!r.isImage, 'HTML was treated as an image');
     assert(r.threw, 'converting HTML did not throw');
     return 'refused';
+  });
+
+  await check('the options page reads and writes settings in Chrome', async () => {
+    // The options page was previously the one surface with no Chrome coverage at all. It is
+    // driven here end to end: seed a value from the worker, open the real page, and check it
+    // both renders that value and writes a change back to chrome.storage.local.
+    await evaluate("await ExtSettings.set({jpegQuality: 0.61, askWhereToSave: true}); return true;");
+
+    const page = await openPage(`chrome-extension://${extensionId}/src/options/options.html`);
+    try {
+      const shown = await page.evaluate(`
+        const deadline = Date.now() + 8000;
+        const slider = () => document.getElementById('jpegQuality');
+        while ((!slider() || slider().value !== '61') && Date.now() < deadline) {
+          await new Promise(r => setTimeout(r, 100));
+        }
+        return {
+          hasBrowser: typeof browser,
+          quality: slider() && slider().value,
+          readout: document.getElementById('jpegQualityValue').textContent,
+          askWhereToSave: document.getElementById('askWhereToSave').checked,
+          kofi: (document.getElementById('kofi') || {}).dataset
+                 ? document.getElementById('kofi').dataset.url : null,
+        };`);
+      assertEqual(shown.hasBrowser, 'object', 'the shim must give the options page a browser namespace');
+      assertEqual(shown.quality, '61', 'the page must show the stored quality, not the default');
+      assertEqual(shown.readout, '61%', 'the readout');
+      assertEqual(shown.askWhereToSave, true, 'the stored checkbox state');
+      assertEqual(shown.kofi, 'https://ko-fi.com/irp_hongkong', 'the Ko-fi button URL');
+
+      // Now act like a user and confirm the change actually reaches chrome.storage.local.
+      await page.evaluate(`
+        const box = document.getElementById('notifyOnSuccess');
+        box.checked = true;
+        box.dispatchEvent(new Event('change', {bubbles: true}));
+        return true;`);
+      const stored = await evaluate(`
+        const deadline = Date.now() + 6000;
+        let v;
+        while (Date.now() < deadline) {
+          v = (await chrome.storage.local.get('notifyOnSuccess')).notifyOnSuccess;
+          if (v === true) break;
+          await new Promise(r => setTimeout(r, 100));
+        }
+        return v;`);
+      assertEqual(stored, true, 'the tick never reached chrome.storage.local');
+      await evaluate('await ExtSettings.reset(); return true;');
+      return 'stored values render, and a tick reaches chrome.storage.local';
+    } finally {
+      await page.close();
+    }
   });
 
   /* ---------------------------------------------------- independent disk check */
