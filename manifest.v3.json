@@ -7,7 +7,7 @@
   "description": "Right-click a WebP image and save it as JPG or PNG. Conversion happens locally in your browser; nothing is uploaded.",
   "browser_specific_settings": {
     "gecko": {
-      "id": "webp-save-as@local",
+      "id": "webp-save-as@charlie754.github.io",
       "strict_min_version": "142.0",
       "data_collection_permissions": {
         "required": ["none"]

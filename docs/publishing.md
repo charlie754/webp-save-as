@@ -20,42 +20,27 @@ npm run package:chrome # dist/chrome/ and dist/webp-save-as-chrome.zip
 
 | Thing | Now | Why it matters |
 | --- | --- | --- |
-| Extension ID | `webp-save-as@local` | `@local` is a placeholder. It becomes the permanent identity on AMO and cannot be changed later. Use something you control, e.g. `webp-save-as@yourname.github.io`. |
-| `homepage_url` | not set | Should point at the GitHub repo once it exists. |
-| Author | not set | Shown on both stores. |
+| Extension ID | `webp-save-as@charlie754.github.io` | Permanent on AMO once submitted. Change it *before* the first upload if you want a different one. |
+| `homepage_url` | the GitHub repo | Shown on both stores. |
+| Author | not set | Optional; shown on both stores. Add `"author"` to the manifests if you want a display name. |
 | Privacy policy | none | Neither store requires one when nothing is collected, but a one-line statement in the listing helps review go faster. |
 
 The ID lives in `manifest.json` and `manifest.v3.json` under
 `browser_specific_settings.gecko.id`. Chrome ignores it and assigns its own on first upload.
+`test/browser/run-extension.mjs` reads it from the manifest, so changing it needs no test edits.
 
 ---
 
-## GitHub
+## GitHub — done
 
-Nothing on this machine can authenticate to GitHub right now: no `gh` CLI, no SSH key, no git
-credential helper. Once one exists, pushing is one command.
-
-The simplest route:
+<https://github.com/charlie754/webp-save-as> — public, MIT.
 
 ```bash
-winget install --id GitHub.cli -e
+git push          # subsequent updates
 ```
 
-then, **in your own terminal** (it opens a browser and needs your input):
-
-```bash
-gh auth login
-```
-
-After that the repo can be created and pushed:
-
-```bash
-gh repo create webp-save-as --public --source=. --remote=origin --push
-```
-
-The repo is clean for publication — it was checked for machine paths and local configuration and
-has none. Two things do become public: your commit-author email (`tinyiupliskin@gmail.com`) and
-the contents of `docs/`, which describe how the extension was built and tested.
+Worth knowing: your commit-author email (`tinyiupliskin@gmail.com`) and the contents of `docs/`
+are public along with the code.
 
 ---
 
@@ -143,7 +128,7 @@ menu over an image is the obvious one — `npm run demo` puts a suitable page on
 > - Saving an image that is already the format you chose copies it rather than re-compressing it
 > - Everything happens locally. No servers, no accounts, no tracking, no data collection.
 >
-> Open source: <REPO URL>
+> Open source: https://github.com/charlie754/webp-save-as
 
 **Category:** Photos & Images (Chrome) / Photos, Music & Videos (AMO)
 

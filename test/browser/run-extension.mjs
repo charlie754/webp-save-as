@@ -19,7 +19,11 @@ import { fileURLToPath } from 'node:url';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
 const ROOT = resolve(HERE, '..', '..');
-const EXTENSION_ID = 'webp-save-as@local';
+/** Read from the manifest rather than pinned here, so changing the add-on's id cannot
+ *  silently leave this harness installing to one id and looking for another. */
+const EXTENSION_ID = JSON.parse(
+  await readFile(join(ROOT, 'manifest.json'), 'utf8'),
+).browser_specific_settings.gecko.id;
 /** Fixed so the self-test page can be reached at a known moz-extension:// origin. */
 const INTERNAL_UUID = '3f2a91c4-7b6d-4e18-9c05-8ad2e6f10b77';
 const DEFAULT_PORT = 34567;
