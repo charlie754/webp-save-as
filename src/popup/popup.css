@@ -1,0 +1,121 @@
+:root {
+  color-scheme: light dark;
+
+  --bg: #ffffff;
+  --text: #15141a;
+  --muted: #5b5b66;
+  --border: #d7d7db;
+  --button: #f0f0f4;
+  --accent: #0060df;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #2b2a33;
+    --text: #fbfbfe;
+    --muted: #b1b1bb;
+    --border: #52525e;
+    --button: #42414d;
+    --accent: #00ddff;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  /* Firefox sizes the panel to the content; Chrome needs a width to work from. */
+  width: 288px;
+  margin: 0;
+  padding: 14px;
+  background: var(--bg);
+  color: var(--text);
+  font: 13px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.head {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.head__icon { flex: none; }
+
+.head__text { min-width: 0; }
+
+.head__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.head__version {
+  margin: 1px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.hint {
+  margin: 0 0 12px;
+  color: var(--muted);
+}
+
+.hint strong { color: var(--text); font-weight: 600; }
+
+.kofi {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 6px;
+  background: #ff5e5b;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.kofi:hover { background: #f04340; }
+
+.kofi:active { transform: translateY(1px); }
+
+.kofi__icon { flex: none; }
+
+.note {
+  margin: 8px 0 12px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.button {
+  flex: 1;
+  font: inherit;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--button);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.button:hover { border-color: var(--accent); }
+
+.button--quiet { background: transparent; }
+
+.button:focus-visible,
+.kofi:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

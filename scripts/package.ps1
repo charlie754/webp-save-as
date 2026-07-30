@@ -29,12 +29,12 @@ $testOnly = @('test/selftest.html', 'test/selftest.js', 'test/selftest-boot.js')
 if ($Chrome) {
   $manifestName = 'manifest.chrome.json'
   # No src/background.js: that is the Firefox MV2 background page.
-  $shipped = @('icons', 'src/lib', 'src/chrome', 'src/options')
+  $shipped = @('icons', 'src/lib', 'src/chrome', 'src/options', 'src/popup')
   $packageName = 'webp-save-as-chrome.zip'
   $unpackedName = 'chrome'
 } else {
   $manifestName = 'manifest.json'
-  $shipped = @('icons', 'src/lib', 'src/background.js', 'src/options')
+  $shipped = @('icons', 'src/lib', 'src/background.js', 'src/options', 'src/popup')
   $packageName = if ($IncludeTests) { 'webp-save-as-test.xpi' } else { 'webp-save-as.xpi' }
   $unpackedName = $null
 }
@@ -52,6 +52,13 @@ if ($manifest.background.scripts) { $referenced += $manifest.background.scripts 
 if ($manifest.background.service_worker) { $referenced += $manifest.background.service_worker }
 if ($manifest.options_ui.page) { $referenced += $manifest.options_ui.page }
 foreach ($size in $manifest.icons.PSObject.Properties) { $referenced += $size.Value }
+# The toolbar button: MV2 calls it browser_action, MV3 calls it action.
+foreach ($actionKey in @('action', 'browser_action')) {
+  $action = $manifest.$actionKey
+  if (-not $action) { continue }
+  if ($action.default_popup) { $referenced += $action.default_popup }
+  foreach ($size in $action.default_icon.PSObject.Properties) { $referenced += $size.Value }
+}
 foreach ($rel in $referenced) {
   if (-not (Test-Path (Join-Path $root $rel))) {
     throw "$manifestName references a file that does not exist: $rel"

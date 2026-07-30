@@ -68,6 +68,10 @@ Release and ESR Firefox refuse unsigned add-ons outright; those need a signed bu
 Right-click an image → **Save WebP as JPG / PNG** for a WebP, **Save Image as JPG / PNG** for
 anything else.
 
+Clicking the extension's **toolbar icon** opens a small panel with the version, a shortcut to the
+settings, and the Ko-fi link. The right-click menu is still the real interface — the panel exists
+so the extension is not an inert, unclickable row in the browser's extensions list.
+
 It also works on a link that points at an image, and on an image opened directly in a tab.
 
 Settings live in `about:addons` → **Save WebP as JPG / PNG** → **Preferences**:
@@ -224,8 +228,8 @@ introduced there. Drop that key and you can lower the floor to 115.
 ## Support
 
 Free and open source, and staying that way. If it saved you time, there is a
-**Support me on Ko-fi** button at the bottom of the extension's Preferences —
-or go straight to [ko-fi.com/irp_hongkong](https://ko-fi.com/irp_hongkong).
+**Support me on Ko-fi** button in the toolbar panel and at the bottom of
+Preferences — or go straight to [ko-fi.com/irp_hongkong](https://ko-fi.com/irp_hongkong).
 
 Nothing in the extension changes either way: no nagging, no reminders, no
 feature held back.

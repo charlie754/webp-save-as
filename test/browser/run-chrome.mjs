@@ -541,6 +541,38 @@ async function main() {
     }
   });
 
+  await check('the toolbar button is registered and its popup renders', async () => {
+    const info = await evaluate(`
+      const popup = await chrome.action.getPopup({});
+      const title = await chrome.action.getTitle({});
+      return {popup, title};`);
+    assert(info.popup.endsWith('/src/popup/popup.html'), 'popup URL: ' + info.popup);
+    assert(info.title, 'the toolbar button has no tooltip');
+
+    const page = await openPage(info.popup);
+    try {
+      const shown = await page.evaluate(`
+        const deadline = Date.now() + 6000;
+        while (!document.getElementById('version').textContent && Date.now() < deadline) {
+          await new Promise(r => setTimeout(r, 100));
+        }
+        const kofi = document.getElementById('kofi');
+        return {
+          hasBrowser: typeof browser,
+          version: document.getElementById('version').textContent,
+          kofi: kofi && kofi.dataset.url,
+          hasSettings: !!document.getElementById('settings'),
+        };`);
+      assertEqual(shown.hasBrowser, 'object', 'the popup needs a browser namespace');
+      assertEqual(shown.kofi, 'https://ko-fi.com/irp_hongkong', 'the Ko-fi URL');
+      assertEqual(shown.hasSettings, true, 'the popup has no settings button');
+      assert(/^Version \d+\.\d+\.\d+$/.test(shown.version), 'version text: ' + shown.version);
+      return info.title + ' · ' + shown.version;
+    } finally {
+      await page.close();
+    }
+  });
+
   /* ---------------------------------------------------- independent disk check */
 
   for (const [route, info] of Object.entries(savedFiles)) {

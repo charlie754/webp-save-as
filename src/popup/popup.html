@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Save WebP as JPG / PNG</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="head">
+    <img class="head__icon" src="../../icons/icon.svg" alt="" width="34" height="34">
+    <div class="head__text">
+      <h1 class="head__title">Save WebP as JPG / PNG</h1>
+      <p class="head__version" id="version"></p>
+    </div>
+  </header>
+
+  <p class="hint">
+    Right-click any image and choose <strong>Save as JPG</strong> or
+    <strong>Save as PNG</strong>. Converted on your machine — never uploaded.
+  </p>
+
+  <button type="button" id="kofi" class="kofi" data-url="https://ko-fi.com/irp_hongkong">
+    <svg class="kofi__icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+      <path fill="currentColor" d="M4 4h13a4 4 0 0 1 0 8h-1.1A6 6 0 0 1 10 17H8a6 6 0 0 1-6-6V4a0 0 0 0 1 0 0zm12 2v4h1a2 2 0 0 0 0-4h-1z"/>
+      <path fill="currentColor" d="M3 19h14a1 1 0 0 1 0 2H3a1 1 0 0 1 0-2z"/>
+    </svg>
+    Support me on Ko-fi
+  </button>
+
+  <p class="note">
+    Free and open source, and staying that way. A tip is a one-off — nothing in
+    the extension changes either way.
+  </p>
+
+  <div class="actions">
+    <button type="button" id="settings" class="button">Settings</button>
+    <button type="button" id="source" class="button button--quiet"
+            data-url="https://github.com/charlie754/webp-save-as">Source</button>
+  </div>
+
+  <script src="../lib/polyfill.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

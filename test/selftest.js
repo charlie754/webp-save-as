@@ -289,6 +289,43 @@
       return ids.length + ' controls present, values round-tripped';
     });
 
+    await check('the toolbar button is registered and its popup renders', async function () {
+      assert(browser.browserAction, 'no browserAction API - the extension has no clickable icon');
+      const popup = await browser.browserAction.getPopup({});
+      assertEqual(popup, browser.runtime.getURL('src/popup/popup.html'), 'the popup URL');
+      const title = await browser.browserAction.getTitle({});
+      assert(title, 'the toolbar button has no tooltip');
+
+      const frame = document.createElement('iframe');
+      frame.style.cssText = 'width:320px;height:340px;border:1px solid #ccc';
+      frame.src = popup;
+      document.body.appendChild(frame);
+      await new Promise(function (resolve, reject) {
+        frame.onload = resolve;
+        frame.onerror = function () { reject(new Error('the popup failed to load')); };
+      });
+      const doc = frame.contentDocument;
+      try {
+        const kofi = doc.getElementById('kofi');
+        assert(kofi, 'the popup has no Ko-fi button');
+        assertEqual(kofi.dataset.url, 'https://ko-fi.com/irp_hongkong', 'the Ko-fi URL');
+        assert(doc.getElementById('settings'), 'the popup has no settings button');
+
+        // The version is filled in from the manifest at load; wait for the script to run.
+        const deadline = Date.now() + 4000;
+        let shown = '';
+        while (Date.now() < deadline) {
+          shown = doc.getElementById('version').textContent || '';
+          if (shown) break;
+          await new Promise(function (r) { setTimeout(r, 50); });
+        }
+        assertEqual(shown, 'Version ' + manifest.version, 'the version shown in the popup');
+        return title + ' · ' + shown;
+      } finally {
+        frame.remove();
+      }
+    });
+
     await check('an image behind a blob: URL is read through the page', async function () {
       assert(typeof background.PageFetchClient === 'object', 'PageFetchClient is not on the background page');
       const tab = await browser.tabs.create({ url: server + '/test/browser/blobpage.html', active: false });
