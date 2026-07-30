@@ -14,6 +14,18 @@ test('normalize() fills in every default', () => {
   assert.deepEqual(Settings.normalize({}), Settings.DEFAULTS);
 });
 
+test('the shipped defaults are the ones we intend to ship', () => {
+  // Pinned explicitly: these two decide whether the menu appears at all, so an accidental flip
+  // should fail a test rather than quietly change what every user sees.
+  assert.equal(Settings.DEFAULTS.showForAllImages, true, 'the menu is offered for every image');
+  assert.equal(Settings.DEFAULTS.hideWhenUnknown, false, 'an unidentifiable image still gets the menu');
+  assert.equal(Settings.DEFAULTS.showJpg, true);
+  assert.equal(Settings.DEFAULTS.showPng, true);
+  assert.equal(Settings.DEFAULTS.sniffBytes, true, 'formats are identified by their bytes');
+  assert.equal(Settings.DEFAULTS.passthroughSameFormat, true, 'no pointless re-encoding');
+  assert.equal(Settings.DEFAULTS.askWhereToSave, false);
+});
+
 test('normalize() ignores non-boolean values for flags', () => {
   const out = Settings.normalize({ askWhereToSave: 'yes', notifyOnSuccess: 1, warnAnimated: null });
   assert.equal(out.askWhereToSave, Settings.DEFAULTS.askWhereToSave);

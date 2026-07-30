@@ -21,7 +21,7 @@
   <h1>Right-click each image below</h1>
   <p class="note">
     Served over HTTP so the extension can read the bytes. Default settings assumed
-    (WebP only, byte sniffing on).
+    (every image offered, byte sniffing on).
   </p>
 
   <div class="case">
@@ -42,9 +42,10 @@
   <div class="case">
     <h2>3. A real PNG</h2>
     <p class="expect">
-      Expect: <b>no menu items</b> by default. Turn on
-      <i>Show the menu for every image</i> in Preferences and they appear as
-      <b>Save Image as JPG / PNG</b>.
+      Expect: <b>Save Image as JPG / PNG</b> — note “Image”, not “WebP”, because the sniffer knows
+      this one is not a WebP. Saving it as PNG copies the original bytes rather than re-encoding.
+      Turn <i>Show the menu for every image</i> off in Preferences and the items disappear here
+      while staying put on the WebP cases above.
     </p>
     <img id="realPng" alt="generated PNG">
   </div>

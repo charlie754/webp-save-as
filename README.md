@@ -4,9 +4,11 @@ A Firefox extension that adds **“Save WebP as JPG”** and **“Save WebP as P
 right-click menu. Picking one decodes the WebP, re-encodes it, and drops the converted file
 straight into your downloads folder. Everything happens locally — the image is never uploaded.
 
-The menu only appears for images that really are WebP, and it works out which ones those are by
-reading the first 64 bytes of the file rather than trusting the address. Plenty of sites serve
-WebP from a `.jpg` URL with an `image/jpeg` header; those still get the menu.
+Out of the box the menu appears on any image, and it works out what each one actually is by
+reading the first 64 bytes rather than trusting the address — a real WebP is named explicitly
+(**Save WebP as JPG**), anything else reads **Save Image as JPG**. That distinction matters
+because plenty of sites serve WebP from a `.jpg` URL with an `image/jpeg` header. Narrow it to
+WebP only in the settings if you prefer.
 
 ---
 
@@ -40,16 +42,17 @@ Release and ESR Firefox refuse unsigned add-ons outright; those need a signed bu
 
 ## Using it
 
-Right-click any WebP image → **Save WebP as JPG** or **Save WebP as PNG**.
+Right-click an image → **Save WebP as JPG / PNG** for a WebP, **Save Image as JPG / PNG** for
+anything else.
 
-It also works on a link that points at a WebP, and on a WebP opened directly in a tab.
+It also works on a link that points at an image, and on an image opened directly in a tab.
 
 Settings live in `about:addons` → **Save WebP as JPG / PNG** → **Preferences**:
 
 | Setting | Default | What it does |
 | --- | --- | --- |
 | Offer “Save as JPG” / “Save as PNG” | both on | Which menu items exist |
-| Show the menu for every image | off | Also convert AVIF, GIF, BMP… not just WebP |
+| Show the menu for every image | **on** | Also converts AVIF, GIF, BMP, PNG… Turn off to restrict the menu to WebP |
 | Identify images by reading their first bytes | on | Off = trust the file extension only, never touch the network |
 | Hide the menu when the format can’t be identified | off | On = strict; the menu only ever appears for a confirmed WebP |
 | Quality | 92% | JPG encoder quality |

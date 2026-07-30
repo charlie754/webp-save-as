@@ -15,8 +15,13 @@
     showJpg: true,
     /** Show the "Save Image as PNG" menu item. */
     showPng: true,
-    /** false = only offer the menu for WebP images; true = offer it for any image. */
-    showForAllImages: false,
+    /**
+     * true = offer the menu for any image; false = only for WebP.
+     * On by default: the menu is then where you expect it for every image, and a WebP is still
+     * called out by name ("Save WebP as JPG" rather than "Save Image as JPG"). Saving an image
+     * that is already the target format copies its bytes, so this costs nothing in quality.
+     */
+    showForAllImages: true,
     /** Read the first bytes of the image to identify it (a cache hit costs no network request). */
     sniffBytes: true,
     /** Hide the menu when the format could not be identified, instead of offering it anyway. */

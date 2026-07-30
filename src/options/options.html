@@ -41,7 +41,11 @@
         <input type="checkbox" id="showForAllImages">
         <span class="row__text">
           <span class="row__label">Show the menu for every image, not just WebP</span>
-          <span class="row__hint">Useful for converting AVIF or GIF too. JPG→JPG and PNG→PNG stay untouched.</span>
+          <span class="row__hint">
+            On by default, so AVIF, GIF and PNG can be converted too. A WebP is still named as one
+            in the menu, and saving an image that is already the chosen format copies its bytes
+            rather than re-compressing them. Turn this off to restrict the menu to WebP.
+          </span>
         </span>
       </label>
 

@@ -92,19 +92,22 @@
 
     await check('settings survive a write and read through storage', async function () {
       const before = await ExtSettings.get();
-      await ExtSettings.set({ jpegQuality: 0.37, jpegBackground: '#123456', showForAllImages: true });
+      // showForAllImages is deliberately set to the opposite of its default, so that the reset
+      // check below proves reset() restored a default rather than keeping what we just wrote.
+      await ExtSettings.set({ jpegQuality: 0.37, jpegBackground: '#123456', showForAllImages: false });
       ExtSettings.invalidate();
       const after = await ExtSettings.get();
       assertEqual(after.jpegQuality, 0.37, 'jpegQuality');
       assertEqual(after.jpegBackground, '#123456', 'jpegBackground');
-      assertEqual(after.showForAllImages, true, 'showForAllImages');
+      assertEqual(after.showForAllImages, false, 'showForAllImages');
       const raw = await browser.storage.local.get('jpegQuality');
       assertEqual(raw.jpegQuality, 0.37, 'value actually in storage.local');
       await ExtSettings.reset();
       ExtSettings.invalidate();
       const reset = await ExtSettings.get();
-      assertEqual(reset.jpegQuality, ExtSettings.DEFAULTS.jpegQuality, 'after reset');
-      assertEqual(reset.showForAllImages, false, 'after reset');
+      assertEqual(reset.jpegQuality, ExtSettings.DEFAULTS.jpegQuality, 'quality after reset');
+      assertEqual(reset.showForAllImages, ExtSettings.DEFAULTS.showForAllImages, 'scope after reset');
+      assertEqual(reset.showForAllImages, true, 'and the shipped default is "every image"');
       return 'wrote 0.37/#123456, read it back, reset cleanly (was ' + before.jpegQuality + ')';
     });
 
@@ -114,7 +117,9 @@
       const jpeg = ImageSniff.fromContentType('image/jpeg');
       const svg = ImageSniff.fromContentType('image/svg+xml');
       const html = { mime: 'text/html', isImage: false };
-      const strict = Object.assign({}, ExtSettings.DEFAULTS);
+      // Both scopes are spelled out rather than derived from DEFAULTS, so changing the shipped
+      // default cannot quietly rewrite what these cases are testing.
+      const strict = Object.assign({}, ExtSettings.DEFAULTS, { showForAllImages: false });
       const loose = Object.assign({}, ExtSettings.DEFAULTS, { showForAllImages: true });
       const hideUnknown = Object.assign({}, ExtSettings.DEFAULTS, { hideWhenUnknown: true });
       const image = ['image'];
@@ -122,6 +127,7 @@
 
       assertEqual(decide(webp, strict, image).visible, true, 'WebP is always offered');
       assertEqual(decide(webp, strict, image).webp, true, 'WebP is labelled as WebP');
+      assertEqual(decide(webp, loose, image).webp, true, 'and still labelled WebP in the wider scope');
       assertEqual(decide(webp, strict, link).visible, true, 'a link to a WebP is offered too');
       assertEqual(decide(jpeg, strict, image).visible, false, 'a JPEG is hidden in WebP-only mode');
       assertEqual(decide(jpeg, loose, image).visible, true, 'a JPEG shows when all images are allowed');
@@ -131,7 +137,11 @@
       assertEqual(decide(null, strict, image).visible, true, 'an unidentified image is still offered');
       assertEqual(decide(null, hideUnknown, image).visible, false, 'unless hideWhenUnknown is set');
       assertEqual(decide(null, strict, link).visible, false, 'an unidentified link is not offered');
-      return '12 cases';
+
+      // And the shipped default really is the wider scope.
+      assertEqual(decide(jpeg, ExtSettings.DEFAULTS, image).visible, true,
+        'out of the box, a JPEG must offer the menu');
+      return '14 cases';
     });
 
     await check('a .webp address is recognised without any network request', async function () {
