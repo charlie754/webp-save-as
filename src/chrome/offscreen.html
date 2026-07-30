@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Save WebP as — converter</title>
+</head>
+<body>
+  <!--
+    A hidden DOM document, created only when the service worker needs a blob: URL.
+    An MV3 service worker has no URL.createObjectURL, so for outputs too large to hand to
+    downloads.download() as a base64 data: URL, the work is repeated here instead.
+  -->
+  <script src="polyfill.js"></script>
+  <script src="../lib/sniff.js"></script>
+  <script src="../lib/convert.js"></script>
+  <script src="offscreen.js"></script>
+</body>
+</html>

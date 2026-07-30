@@ -36,9 +36,12 @@
     (async function () {
       const send = function (payload) {
         try {
-          browser.runtime.sendMessage(Object.assign({ channel: channel, nonce: nonce }, payload));
+          // Injected into a page, so resolve the namespace here: Chrome content scripts only
+          // have `chrome`, and this function is serialised before the polyfill ever runs.
+          const api = (typeof browser !== 'undefined' && browser.runtime) ? browser : chrome;
+          api.runtime.sendMessage(Object.assign({ channel: channel, nonce: nonce }, payload));
         } catch (err) {
-          /* the background page went away; nothing useful to do from here */
+          /* the background context went away; nothing useful to do from here */
         }
       };
       try {

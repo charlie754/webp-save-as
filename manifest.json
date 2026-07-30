@@ -30,6 +30,7 @@
     "persistent": true,
     "scripts": [
       "src/lib/sniff.js",
+      "src/lib/identify.js",
       "src/lib/filename.js",
       "src/lib/convert.js",
       "src/lib/settings.js",

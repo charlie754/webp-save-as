@@ -61,9 +61,12 @@
     await check('the background page is running and exposes its logic', async function () {
       background = await browser.runtime.getBackgroundPage();
       assert(background, 'no background page');
-      for (const fn of ['decideVisibility', 'quickFormat', 'identify', 'applyMenuState', 'formatOfBlob']) {
-        assert(typeof background[fn] === 'function', 'background.' + fn + ' is not a function');
+      assert(background.ImageIdentify, 'the background page did not load src/lib/identify.js');
+      for (const fn of ['decideVisibility', 'quickFormat', 'identify', 'formatOfBlob']) {
+        assert(typeof background.ImageIdentify[fn] === 'function',
+          'background.ImageIdentify.' + fn + ' is not a function');
       }
+      assert(typeof background.applyMenuState === 'function', 'background.applyMenuState is missing');
       return 'background page alive';
     });
 
@@ -112,7 +115,7 @@
     });
 
     await check('the menu decision matrix behaves as designed', function () {
-      const decide = background.decideVisibility;
+      const decide = background.ImageIdentify.decideVisibility;
       const webp = ImageSniff.fromContentType('image/webp');
       const jpeg = ImageSniff.fromContentType('image/jpeg');
       const svg = ImageSniff.fromContentType('image/svg+xml');
@@ -145,7 +148,7 @@
     });
 
     await check('a .webp address is recognised without any network request', async function () {
-      const format = await background.identify('https://example.invalid/photo.webp', ExtSettings.DEFAULTS);
+      const format = await background.ImageIdentify.identify('https://example.invalid/photo.webp', ExtSettings.DEFAULTS);
       assertEqual(format.mime, 'image/webp', 'mime');
       assertEqual(format.source, 'url', 'must come from the address, not a fetch');
       return 'source=url';
@@ -160,11 +163,11 @@
       assertEqual(probe.headers.get('content-type'), 'image/jpeg', 'the server really does lie');
       assertEqual(ImageSniff.guessFromUrl(url).mime, 'image/jpeg', 'the address really does lie');
 
-      const format = await background.identify(url, ExtSettings.DEFAULTS);
+      const format = await background.ImageIdentify.identify(url, ExtSettings.DEFAULTS);
       assertEqual(format.mime, 'image/webp', 'identified mime');
       assertEqual(format.source, 'bytes', 'must have come from the bytes');
       assertEqual(format.width, 960, 'width read from the VP8 header');
-      const decision = background.decideVisibility(format, ExtSettings.DEFAULTS, ['image']);
+      const decision = background.ImageIdentify.decideVisibility(format, ExtSettings.DEFAULTS, ['image']);
       assertEqual(decision.visible, true, 'the menu must appear for it');
       assertEqual(decision.webp, true, 'and be labelled "Save WebP as ..."');
       return 'sniffed 960×856 WebP behind a .jpg name and an image/jpeg header';
@@ -172,7 +175,7 @@
 
     await check('the sniff result is cached, so a second right-click costs nothing', async function () {
       const url = server + '/test/fixtures/mislabelled-as.jpg';
-      const quick = background.quickFormat(url);
+      const quick = background.ImageIdentify.quickFormat(url);
       assertEqual(quick.final, true, 'the second look must be answered from cache');
       assertEqual(quick.format.mime, 'image/webp', 'cached mime');
       return 'cache hit';
@@ -185,7 +188,7 @@
       const source = await response.blob();
       assertEqual(source.size, 2358, 'source size');
 
-      const format = await background.formatOfBlob(source);
+      const format = await background.ImageIdentify.formatOfBlob(source);
       assertEqual(format.mime, 'image/webp', 'format of the downloaded blob');
 
       const converted = await ImageConvert.convertImage(source, {
@@ -308,7 +311,7 @@
 
         const blob = await background.PageFetchClient.fetchViaPage(tab.id, 0, blobUrl);
         assertEqual(blob.size, 2358, 'bytes handed back by the page');
-        const format = await background.formatOfBlob(blob);
+        const format = await background.ImageIdentify.formatOfBlob(blob);
         assertEqual(format.mime, 'image/webp', 'format of the recovered blob');
         assertEqual(format.width, 960, 'width of the recovered blob');
 
@@ -322,7 +325,7 @@
 
     await check('a non-image is refused rather than saved as a broken file', async function () {
       const blob = new Blob(['<!doctype html><title>not an image</title>'], { type: 'text/html' });
-      const format = await background.formatOfBlob(blob);
+      const format = await background.ImageIdentify.formatOfBlob(blob);
       assert(!format || !format.isImage, 'HTML was treated as an image: ' + JSON.stringify(format));
       let threw = false;
       try {

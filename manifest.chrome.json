@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "Save WebP as JPG / PNG",
+  "version": "1.1.0",
+  "description": "Right-click an image and save it as JPG or PNG. Conversion happens locally in your browser; nothing is uploaded.",
+  "minimum_chrome_version": "116",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "permissions": [
+    "contextMenus",
+    "downloads",
+    "storage",
+    "notifications",
+    "scripting",
+    "offscreen"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "src/chrome/service-worker.js"
+  },
+  "options_ui": {
+    "page": "src/options/options.html",
+    "open_in_tab": false
+  }
+}

@@ -1,8 +1,13 @@
 # Save WebP as JPG / PNG
 
-A Firefox extension that adds **“Save WebP as JPG”** and **“Save WebP as PNG”** to the image
-right-click menu. Picking one decodes the WebP, re-encodes it, and drops the converted file
-straight into your downloads folder. Everything happens locally — the image is never uploaded.
+A browser extension — **Firefox and Chrome** — that adds **“Save as JPG”** and **“Save as PNG”**
+to the image right-click menu. Picking one decodes the image, re-encodes it, and drops the
+converted file straight into your downloads folder. Everything happens locally; the image is
+never uploaded.
+
+Both builds share one codebase: the format sniffer, the converter, the filename logic and the
+settings all live in `src/lib/` and are byte-for-byte the same in each package. Only the
+background layer differs, because Manifest V3 forces it to (see [Two builds](#two-builds)).
 
 Out of the box the menu appears on any image, and it works out what each one actually is by
 reading the first 64 bytes rather than trusting the address — a real WebP is named explicitly
@@ -13,6 +18,24 @@ WebP only in the settings if you prefer.
 ---
 
 ## Install
+
+### Chrome
+
+```bash
+npm run package:chrome
+```
+
+Then open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked**, and select
+`dist/chrome`. That is the whole procedure — Chrome grants `<all_urls>` at install time, so the
+extension works immediately.
+
+`dist/webp-save-as-chrome.zip` is the same thing packaged for the Chrome Web Store.
+
+Note that `--load-extension` on the command line no longer works in Chrome 137 and later; the
+supported automation route is the DevTools Protocol command `Extensions.loadUnpacked`, which is
+what `npm run test:chrome` uses.
+
+### Firefox
 
 The build is unsigned, so pick whichever fits your Firefox.
 
@@ -99,11 +122,12 @@ Design notes worth knowing:
 ## Tests
 
 ```bash
-npm test              # 64 unit tests, no browser needed
-npm run test:firefox  # 12 conversion checks inside real Firefox (headless)
-npm run test:extension # 14 checks inside the installed extension (headless)
-npm run test:all
-npm run lint:ext      # official AMO linter
+npm test               # 65 unit tests, no browser needed
+npm run test:firefox   # 12 conversion checks inside real Firefox (headless)
+npm run test:extension # 14 checks inside the installed Firefox add-on (headless)
+npm run test:chrome    # 16 checks inside the installed Chrome extension (headless)
+npm run test:all       # all 107
+npm run lint:ext       # official AMO linter
 ```
 
 `test:firefox` serves `test/browser/harness.html` over HTTP, runs it in a throwaway Firefox
@@ -117,8 +141,14 @@ show/hide decision matrix, a WebP disguised as `image/jpeg` behind a `.jpg` addr
 fallback, the options page round-tripping through `storage.local`, and a converted JPEG landing on
 disk — which the runner then re-opens and checks byte for byte.
 
-Both browser runners need Firefox; they look in the usual install locations, or pass
-`--firefox "C:\path\to\firefox.exe"`. Add `--headed` to `run-extension.mjs` to watch it happen.
+`test:chrome` packages the Chrome build, loads it into a throwaway profile via
+`Extensions.loadUnpacked`, then **attaches to the MV3 service worker over the DevTools Protocol
+and calls its real code**. That is how the Chrome side is tested without shipping a single line
+of test scaffolding inside the extension. It covers both download routes, and re-opens each
+saved file from disk to check its size and magic bytes.
+
+The runners look in the usual install locations, or pass `--firefox` / `--chrome` with a path.
+Add `--headed` to watch either one happen.
 
 ### Checking the right-click menu by hand
 
@@ -152,22 +182,42 @@ Verified on Firefox Developer Edition 154 (Windows 11), Node 24.
 - **`blob:` images need their page open**, since only that page can read the URL.
 - Byte sniffing can issue one request for an image that is not in the cache. Turn it off in the
   settings if you would rather it never did.
+- **Chrome only:** the menu label cannot change per image, and WebP-only mode filters by address
+  rather than by content — see [Two builds](#two-builds). The Chrome package is also unsigned, so
+  it installs through **Load unpacked** until it goes through the Web Store.
 
 ---
 
-## Manifest V3
+## Two builds
 
-`manifest.json` is V2 deliberately: Firefox grants `<all_urls>` at install time, and the
-extension is useless without it — it cannot read image bytes to convert them. Under Firefox's
-MV3, host permissions are **not** granted at install; the user has to grant them afterwards, and
-until they do every conversion fails.
+| | Firefox | Chrome |
+| --- | --- | --- |
+| Manifest | `manifest.json` (V2) | `manifest.chrome.json` (V3) |
+| Background | persistent page | service worker |
+| Menu | decided per right-click | static, rebuilt when settings change |
+| Blob URLs | available | **not in a worker** → data: URL, or the offscreen document |
+| Icons | SVG | PNG (`npm run icons` rasterises the SVG) |
+| Menu item icons | yes | rejected outright by the API |
 
-`manifest.v3.json` is a working V3 variant if you want it — copy it over `manifest.json`. The code
-already handles both (`scripting.executeScript` when present, `tabs.executeScript` otherwise).
-Expect to add an onboarding step that calls `permissions.request()` from a user gesture.
+Everything in `src/lib/` is identical in both. `src/background.js` and
+`src/chrome/service-worker.js` are the only two files that know which browser they are in.
+
+**Why Firefox stays on V2.** Firefox MV3 does not grant host permissions at install time, and
+this extension cannot read image bytes without them — every conversion would fail until the user
+went and granted access. Chrome MV3 *does* grant them at install, so there the tradeoff does not
+exist. `manifest.v3.json` is a working Firefox V3 variant if you want it; expect to add an
+onboarding step calling `permissions.request()` from a user gesture.
+
+**What Chrome genuinely cannot do.** There is no `contextMenus.onShown` and no `refresh()`, so
+the menu cannot be decided per right-click. With the default "every image" scope that costs
+nothing. In WebP-only mode the best available approximation is `targetUrlPatterns` matching
+`*.webp` addresses — which means a WebP served from a `.jpg` URL will not show the menu there,
+even though the Firefox build would catch it. The bytes still decide the actual conversion once
+an item is clicked.
 
 `strict_min_version` is 140 because `data_collection_permissions` — which AMO now requires — was
 introduced there. Drop that key and you can lower the floor to 115.
+`minimum_chrome_version` is 116, set by the offscreen API.
 
 ---
 

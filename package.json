@@ -7,8 +7,11 @@
     "test": "node --test \"test/*.test.mjs\"",
     "test:firefox": "node test/browser/run-firefox.mjs",
     "test:extension": "node test/browser/run-extension.mjs",
-    "test:all": "npm test && npm run test:firefox && npm run test:extension",
+    "test:chrome": "node test/browser/run-chrome.mjs",
+    "test:all": "npm test && npm run test:firefox && npm run test:extension && npm run test:chrome",
     "demo": "node test/browser/run-extension.mjs --keep-open",
+    "icons": "node scripts/make-icons.mjs",
+    "package:chrome": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package.ps1 -Chrome",
     "lint:ext": "web-ext lint --source-dir . --ignore-files \"test/**\" \"scripts/**\" \"docs/**\" \"dist/**\" package.json manifest.v3.json",
     "package": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package.ps1"
   },
