@@ -69,10 +69,10 @@ for (const page of PAGES) {
     const button = /<button[^>]*id="kofi"[\s\S]*?<\/button>/.exec(page.html);
     assert.ok(button, 'could not find the Ko-fi button');
     assert.match(button[0], /Support me on Ko-fi/, 'the first line');
-    assert.match(button[0], /IRP_HongKong/, 'the handle should be inside the button');
+    assert.match(button[0], /@IRP_HongKong/, 'the handle should be inside the button');
     // Two separate elements, so they stack rather than running together on one line.
     assert.match(button[0], /class="kofi__title"[^>]*>\s*Support me on Ko-fi/, 'the title needs its own element');
-    assert.match(button[0], /class="kofi__handle"[^>]*>\s*IRP_HongKong/, 'the handle needs its own element');
+    assert.match(button[0], /class="kofi__handle"[^>]*>\s*@IRP_HongKong/, 'the handle needs its own element');
   });
 
   test(`${page.name}: opens links in a tab rather than navigating itself`, () => {
