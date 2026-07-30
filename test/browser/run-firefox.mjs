@@ -8,7 +8,8 @@
  */
 import { createServer } from 'node:http';
 import { spawn } from 'node:child_process';
-import { readFile, writeFile, mkdtemp, rm, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdtemp, mkdir } from 'node:fs/promises';
+import { shutdownFirefox } from './profile.mjs';
 import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, extname, resolve, sep } from 'node:path';
@@ -120,13 +121,12 @@ async function main() {
   const timeout = new Promise((r) => setTimeout(() => r(null), TIMEOUT_MS));
   const report = await Promise.race([reported, timeout]);
 
-  child.kill();
   server.close();
+  await shutdownFirefox(child, profile);
 
   if (!report) {
     console.error('\nThe harness never reported back within ' + TIMEOUT_MS / 1000 + 's.');
     if (browserLog.length) console.error('browser output:\n' + browserLog.join(''));
-    await rm(profile, { recursive: true, force: true }).catch(() => {});
     process.exit(1);
   }
 
@@ -153,8 +153,6 @@ async function main() {
         (data.format ? data.format.label + (data.format.hasAlpha ? ' +alpha' : '') : 'unrecognised') + ')');
     }
   }
-
-  await rm(profile, { recursive: true, force: true }).catch(() => {});
 
   const failed = report.failed || 0;
   console.log('\n' + (report.passed || 0) + ' passed, ' + failed + ' failed');

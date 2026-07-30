@@ -10,7 +10,8 @@
  */
 import { createServer } from 'node:http';
 import { spawn, spawnSync } from 'node:child_process';
-import { readFile, writeFile, mkdtemp, mkdir, rm, stat } from 'node:fs/promises';
+import { readFile, writeFile, mkdtemp, mkdir, stat } from 'node:fs/promises';
+import { shutdownFirefox } from './profile.mjs';
 import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, extname, resolve, sep } from 'node:path';
@@ -182,10 +183,9 @@ async function main() {
     addonState = 'extensions.json unreadable: ' + err.message;
   }
 
-  if (!KEEP_OPEN) {
-    child.kill();
-    server.close();
-  }
+  // The browser stays up until the very end: the file it downloaded lives inside the profile,
+  // and the disk check below has to read it before the profile is deleted.
+  if (!KEEP_OPEN) server.close();
 
   console.log('add-on    : ' + addonState);
 
@@ -194,9 +194,8 @@ async function main() {
     const noise = browserLog.join('').split('\n')
       .filter((l) => /Save WebP|extension|error|Error|warn/i.test(l)).slice(0, 40);
     if (noise.length) console.error('browser output:\n' + noise.join('\n'));
-    child.kill();
     server.close();
-    await rm(profile, { recursive: true, force: true }).catch(() => {});
+    await shutdownFirefox(child, profile);
     process.exit(1);
   }
 
@@ -252,9 +251,8 @@ async function main() {
     const cleanup = async () => {
       if (cleaning) return;
       cleaning = true;
-      try { child.kill(); } catch { /* already gone */ }
       server.close();
-      await rm(profile, { recursive: true, force: true }).catch(() => {});
+      await shutdownFirefox(child, profile);
       process.exit(failed > 0 ? 1 : 0);
     };
     process.on('SIGINT', cleanup);
@@ -262,8 +260,7 @@ async function main() {
     return;
   }
 
-  child.kill();
-  await rm(profile, { recursive: true, force: true }).catch(() => {});
+  await shutdownFirefox(child, profile);
   process.exit(failed > 0 || report.fatal ? 1 : 0);
 }
 
