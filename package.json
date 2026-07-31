@@ -1,6 +1,6 @@
 {
   "name": "firefox-webp-save-as",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "private": true,
   "description": "Firefox and Chrome extension: right-click an image and save it as JPG or PNG.",
   "homepage": "https://github.com/charlie754/webp-save-as",

@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Save WebP as JPG / PNG",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "Right-click a WebP image and save it as JPG or PNG. Conversion happens locally in your browser; nothing is uploaded.",
   "homepage_url": "https://github.com/charlie754/webp-save-as",
   "browser_specific_settings": {

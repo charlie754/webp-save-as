@@ -3,7 +3,7 @@
   "//host_permissions": "In Firefox MV3 host permissions are NOT granted at install time. The extension cannot read image bytes until the user grants access (about:addons -> this add-on -> Permissions -> 'Access your data for all websites'), or you accept it per-site via the toolbar. That friction is why MV2 is the default here.",
   "manifest_version": 3,
   "name": "Save WebP as JPG / PNG",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "Right-click a WebP image and save it as JPG or PNG. Conversion happens locally in your browser; nothing is uploaded.",
   "browser_specific_settings": {
     "gecko": {
